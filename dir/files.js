@@ -31,27 +31,26 @@ function getallfiles(filepath) {
         return ans;
     });
 }
-function addtos3(filepath) {
+const s3 = new aws_sdk_1.S3({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+});
+function addtos3(filepath, foldername) {
     return __awaiter(this, void 0, void 0, function* () {
-        const s3 = new aws_sdk_1.S3({
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-        });
         const filecontent = yield promises_1.default.readFile(filepath);
         const params = {
-            Bucket: "vercel-bucket-aadinir",
+            Bucket: `vercel-bucket-aadinir/foldername}`,
             Key: path_1.default.basename(filepath),
             Body: filecontent
         };
-        s3.upload(params, (err, data) => {
+        yield s3.upload(params, (err, data) => {
             if (err) {
                 console.error('Error uploading file:', err);
             }
             else {
                 console.log(`File uploaded successfully. ${data.Location}`);
             }
-        });
+        }).promise();
         console.log(s3);
     });
 }
-addtos3("/Users/aadithyaniranjan/Projects/vercel/dir/outputs/jebmj/README.md");

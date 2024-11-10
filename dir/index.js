@@ -29,7 +29,9 @@ app.post('/deploy', (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     const id = (0, utils_1.generate)();
     yield (0, simple_git_1.default)().clone(url, path_1.default.join(__dirname, `outputs/${id}`));
     const files = yield (0, files_1.getallfiles)(path_1.default.join(__dirname, `outputs/${id}`));
-    console.log(files);
+    for (const file of files) {
+        yield (0, files_1.addtos3)(file, id); // Sequentially upload files to S3
+    }
     res.json({
         id: id
     });
