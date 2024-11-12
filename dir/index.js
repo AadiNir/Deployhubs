@@ -18,6 +18,9 @@ const utils_1 = require("./utils");
 const files_1 = require("./files");
 const simple_git_1 = __importDefault(require("simple-git"));
 const path_1 = __importDefault(require("path"));
+const redis_1 = require("redis");
+const publisher = (0, redis_1.createClient)();
+publisher.connect();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
@@ -32,6 +35,7 @@ app.post('/deploy', (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     for (const file of files) {
         yield (0, files_1.addtos3)(file, id); // Sequentially upload files to S3
     }
+    publisher.lPush("build-queue", id);
     res.json({
         id: id
     });

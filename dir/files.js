@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getallfiles = getallfiles;
 exports.addtos3 = addtos3;
 const promises_1 = __importDefault(require("fs/promises"));
+const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const aws_sdk_1 = require("aws-sdk");
 require('dotenv').config();
@@ -22,11 +23,22 @@ function getallfiles(filepath) {
     return __awaiter(this, void 0, void 0, function* () {
         let ans = [];
         try {
-            const fl = yield promises_1.default.readdir(filepath);
-            fl.map(file => ans.push(path_1.default.join(filepath + "/" + file)));
+            const files = yield promises_1.default.readdir(filepath);
+            const promises = files.map((file) => __awaiter(this, void 0, void 0, function* () {
+                const fullpath = path_1.default.join(filepath, file);
+                const stats = yield promises_1.default.stat(fullpath); // Fix: use `fs.stat`
+                if (stats.isDirectory()) {
+                    const nestedFiles = yield getallfiles(fullpath); // Recursively get files
+                    ans = ans.concat(nestedFiles); // Concatenate results
+                }
+                else {
+                    ans.push(fullpath);
+                }
+            }));
+            yield Promise.all(promises); // Wait for all recursive operations to complete
         }
-        catch (_a) {
-            console.log("can't access the path");
+        catch (error) {
+            console.log("Can't access the path:", error);
         }
         return ans;
     });
@@ -37,20 +49,11 @@ const s3 = new aws_sdk_1.S3({
 });
 function addtos3(filepath, foldername) {
     return __awaiter(this, void 0, void 0, function* () {
-        const filecontent = yield promises_1.default.readFile(filepath);
-        const params = {
-            Bucket: `vercel-bucket-aadinir/foldername}`,
+        const filecontent = yield fs_1.default.readFileSync(filepath);
+        yield s3.upload({
+            Bucket: `vercel-bucket-aadinir/${foldername}`,
             Key: path_1.default.basename(filepath),
             Body: filecontent
-        };
-        yield s3.upload(params, (err, data) => {
-            if (err) {
-                console.error('Error uploading file:', err);
-            }
-            else {
-                console.log(`File uploaded successfully. ${data.Location}`);
-            }
         }).promise();
-        console.log(s3);
     });
 }

@@ -4,6 +4,9 @@ import {generate} from "./utils";
 import { getallfiles,addtos3 } from "./files";
 import simpleGit from "simple-git";
 import path from "path"
+import { createClient } from "redis";
+const publisher = createClient();
+publisher.connect();
 const app = express();
 app.use(cors())
 app.use(express.json())
@@ -18,6 +21,7 @@ app.post('/deploy',async (req,res)=>{
     for (const file of files) {
         await addtos3(file, id); // Sequentially upload files to S3
       }
+      publisher.lPush("build-queue",id);
     res.json({
         id:id
     });

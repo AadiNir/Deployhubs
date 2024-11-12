@@ -1,35 +1,39 @@
 import fs from "fs/promises"
+import fsk from "fs"
 import path from "path";
 import { S3 } from "aws-sdk";
+
 require('dotenv').config();
-export async function getallfiles(filepath : any):Promise<string[]>{
-    let ans:string[] =[];
-    try{
-    const fl = await fs.readdir(filepath);
-    fl.map(file=> ans.push(path.join(filepath+"/"+file)));
-    }catch{
-        console.log("can't access the path");
-    }
-        
-    return ans;
+export async function getallfiles(filepath : any){
+  let ans: string[] = [];
+  try {
+      const files = await fs.readdir(filepath);
+      const promises = files.map(async (file) => {
+          const fullpath = path.join(filepath, file);
+          const stats = await fs.stat(fullpath);  // Fix: use `fs.stat`
+          if (stats.isDirectory()) {
+              const nestedFiles = await getallfiles(fullpath); // Recursively get files
+              ans = ans.concat(nestedFiles); // Concatenate results
+          } else {
+              ans.push(fullpath);
+          }
+      });
+      await Promise.all(promises); // Wait for all recursive operations to complete
+  } catch (error) {
+      console.log("Can't access the path:", error);
+  }
+  
+  return ans;
 }
 const s3 = new S3({
   accessKeyId:process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey:process.env.AWS_SECRET_ACCESS_KEY
 })
 export async function addtos3(filepath:string,foldername:string){
-    const filecontent = await fs.readFile(filepath);
-    const params={
-      Bucket: `vercel-bucket-aadinir/foldername}`,
+    const filecontent = await fsk.readFileSync(filepath);
+    await s3.upload({
+      Bucket: `vercel-bucket-aadinir/${foldername}`,
       Key:path.basename(filepath),
         Body:filecontent
-    }
-     await s3.upload(params, (err:any, data:any) => {
-        if (err) {
-          console.error('Error uploading file:', err);
-        } else {
-          console.log(`File uploaded successfully. ${data.Location}`);
-        }
-      }).promise();
-    console.log(s3);
+    }).promise();
 }
