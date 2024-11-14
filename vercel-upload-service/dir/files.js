@@ -49,6 +49,7 @@ const s3 = new aws_sdk_1.S3({
 });
 function addtos3(filepath, foldername) {
     return __awaiter(this, void 0, void 0, function* () {
+        console.log(path_1.default.basename(filepath));
         const filecontent = yield fs_1.default.readFileSync(filepath);
         yield s3.upload({
             Bucket: `vercel-bucket-aadinir/${foldername}`,

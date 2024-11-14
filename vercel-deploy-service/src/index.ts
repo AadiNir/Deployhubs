@@ -1,4 +1,5 @@
 import { createClient,commandOptions } from "redis";
+import { downloadfiles } from "./aws";
 const subsrciber =  createClient();
 subsrciber.connect()
 async function main(){
@@ -8,7 +9,11 @@ async function main(){
             'build-queue',
             0
         );
-        console.log(resp)
+        
+        const ele:any = resp?.element
+        console.log(ele);
+        await downloadfiles(ele)
+
     }
 }
 main();

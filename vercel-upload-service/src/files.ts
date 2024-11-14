@@ -30,6 +30,7 @@ const s3 = new S3({
   secretAccessKey:process.env.AWS_SECRET_ACCESS_KEY
 })
 export async function addtos3(filepath:string,foldername:string){
+    console.log(path.basename(filepath));
     const filecontent = await fsk.readFileSync(filepath);
     await s3.upload({
       Bucket: `vercel-bucket-aadinir/${foldername}`,

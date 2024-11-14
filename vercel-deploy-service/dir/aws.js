@@ -9,18 +9,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.downloadfiles = downloadfiles;
 const redis_1 = require("redis");
-const aws_1 = require("./aws");
-const subsrciber = (0, redis_1.createClient)();
-subsrciber.connect();
-function main() {
+const aws_sdk_1 = require("aws-sdk");
+require('dotenv').config();
+const publisher = (0, redis_1.createClient)();
+publisher.connect();
+const s3 = new aws_sdk_1.S3({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+});
+function downloadfiles(filepath) {
     return __awaiter(this, void 0, void 0, function* () {
-        while (1) {
-            const resp = yield subsrciber.brPop((0, redis_1.commandOptions)({ isolated: true }), 'build-queue', 0);
-            const ele = resp === null || resp === void 0 ? void 0 : resp.element;
-            console.log(ele);
-            yield (0, aws_1.downloadfiles)(ele);
-        }
+        var parms = {
+            Bucket: `vercel-bucket-aadinir/${filepath}`,
+            Key: filepath
+        };
+        yield s3.getObject(parms, (err, data) => {
+            console.log(data);
+        }).promise();
     });
 }
-main();
